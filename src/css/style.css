@@ -441,3 +441,48 @@ span.flatpickr-weekday,
   scrollbar-color: rgba(100, 100, 255, 0.5) transparent;
 }
 
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* @layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+} */
+
+/* shimmer.css */
+@keyframes shimmerCard {
+  0% {
+    background-position: -500px 0;
+  }
+  100% {
+    background-position: 500px 0;
+  }
+}
+
+.shimmerCard {
+  background: linear-gradient(
+    90deg,
+    rgba(243, 244, 255, 0.3) 0%,
+    rgba(199, 210, 254, 0.4) 50%,
+    rgba(243, 244, 255, 0.3) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmerCard 1.6s infinite linear;
+}
+

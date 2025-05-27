@@ -173,14 +173,14 @@ const MovieModalForm: React.FC<MovieModalFormProps> = ({ onSubmitSuccess }) => {
         onClick={() => setIsOpen(true)}
         className="bg-indigo-purple hover:bg-indigo-purple-dark text-white px-7 rounded mb-4"
       >
-        <span>Add Movie</span>
+        <span>Add</span>
         
       </motion.button>
 
       <AnimatePresence>
         {isOpen && (
           <div 
-            className="fixed top-10 inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
             onClick={() => setIsOpen(false)}
           >
             <motion.div
@@ -207,7 +207,7 @@ const MovieModalForm: React.FC<MovieModalFormProps> = ({ onSubmitSuccess }) => {
               </div>
 
               {/* Form */}
-              <div className="overflow-y-auto max-h-[calc(90vh-130px)] p-5">
+              <div className="overflow-y-auto max-h-[calc(90vh-130px)] p-5 px-10">
                 <form onSubmit={handleFormSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Left Column */}

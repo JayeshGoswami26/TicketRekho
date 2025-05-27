@@ -412,7 +412,7 @@ const ECommerce: React.FC = () => {
               >
                 {latestMovies.map((movie) => (
                   <SwiperSlide key={movie._id}>
-                    <div className="bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="bg-gray-100 cursor-pointer rounded-lg overflow-hidden" onClick={() => Navigate('/movies')} >
                       <img
                         src={`${Urls.Image_url}${movie.movieImage}`}
                         alt={movie.name}
@@ -438,7 +438,7 @@ const ECommerce: React.FC = () => {
                             },
                           )}
                         </p>
-                        <motion.button
+                        {/* <motion.button
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.95 }}
                           initial={{ opacity: 0, y: 10 }}
@@ -448,7 +448,7 @@ const ECommerce: React.FC = () => {
                           className="mt-3 w-full text-white font-medium py-2 px-4 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-600 dark:to-purple-600 hover:opacity-90 shadow-md"
                         >
                           View Details
-                        </motion.button>
+                        </motion.button> */}
                       </div>
                     </div>
                   </SwiperSlide>

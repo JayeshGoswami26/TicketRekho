@@ -1,16 +1,13 @@
-// export default UpdateMovie;
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Urls from '../../networking/app_urls';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-
-interface CastMember {
-  name: string;
-  role: string;
-}
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Tag, Languages, Image as ImageIcon, MapPin, User, Calendar, LayoutList } from 'lucide-react';
+import ImageUploader from '../Utils/ImageUploader';
+import FormField from '../Utils/FormField';
 
 interface EventData {
   id: string;
@@ -26,16 +23,11 @@ interface EventData {
   state: string;
   city: string;
   venue: string;
-  genre: [];
-  language: [];
+  genre: string[];
+  language: string[];
   eventCategory: string;
   isBanner: boolean;
   isAds: boolean;
-}
-
-interface ModalformProps {
-  EventData: EventData | null; // Pass existing data for updates
-  onSubmitSuccess?: (data: any) => void;
 }
 
 const UpdateEvent: React.FC<{
@@ -45,6 +37,7 @@ const UpdateEvent: React.FC<{
 }> = ({ eventId, onSubmitSuccess, onClose }) => {
   const currentUser = useSelector((state: any) => state.user.currentUser?.data);
   const [eventData, setEventData] = useState<EventData | null>(null);
+  const [isOpen, setIsOpen] = useState(true); // Modal is open by default
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -59,47 +52,36 @@ const UpdateEvent: React.FC<{
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [advImage, setAdvImage] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // const [castImages, setCastImages] = useState<File[]>([]);
   const [existingEventImage, setExistingEventImage] = useState('');
-  const [existingAdvImage, setExistingAdvImage] = useState('');
   const [existingBannerImage, setExistingBannerImage] = useState('');
-  // const [existingCastImages, setExistingCastImages] = useState<string[]>([]);
-
-  const [states, setStates] = useState<{ _id: string; name: string }[]>([]); // To store States from API
-  const [selectedStateId, setSelectedStateId] = useState<string>(''); // Store selected state's ID
-
-  const [cities, setCities] = useState<{ _id: string; name: string }[]>([]); // To store City from API
-  const [selectedCityId, setSelectedCityId] = useState<string>(''); // Store selected city's ID
-
-  const [venues, setVenues] = useState<{ _id: string; name: string }[]>([]); // To store City from API
-  const [selectedVenueId, setSelectedVenueId] = useState<string>(''); // Store selected city's ID
-
+  const [existingAdvImage, setExistingAdvImage] = useState('');
+  const [states, setStates] = useState<{ _id: string; name: string }[]>([]);
+  const [selectedStateId, setSelectedStateId] = useState<string>('');
+  const [cities, setCities] = useState<{ _id: string; name: string }[]>([]);
+  const [selectedCityId, setSelectedCityId] = useState<string>('');
+  const [venues, setVenues] = useState<{ _id: string; name: string }[]>([]);
+  const [selectedVenueId, setSelectedVenueId] = useState<string>('');
   const [isBanner, setIsBanner] = useState(false);
   const [isAds, setIsAds] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
   const formatUTCDate = (date: string | Date) => {
     try {
-      const utcDate = new Date(date); // Parse the UTC date string
-
-      // Adjust the date to your desired local timezone (in this case Asia/Kolkata)
-      const localDate = new Date(
-        utcDate.getTime() + utcDate.getTimezoneOffset() * 60000,
-      );
-
-      // Format the local date to "yyyy-MM-dd HH:mm"
+      const utcDate = new Date(date);
+      const localDate = new Date(utcDate.getTime() + utcDate.getTimezoneOffset() * 60000);
       return format(localDate, 'yyyy-MM-dd HH:mm');
     } catch (error) {
       console.error('Error formatting time:', error);
-      return ''; // Return an empty string in case of an error
+      return '';
     }
   };
 
   useEffect(() => {
-    const fetchMovieData = async () => {
+    const fetchEventData = async () => {
       try {
         const response = await axios.post(
           `${Urls.getEventDetail}`,
-          { eventId: eventId },
+          { eventId },
           {
             headers: {
               Authorization: `Bearer ${currentUser.token}`,
@@ -108,10 +90,8 @@ const UpdateEvent: React.FC<{
         );
 
         const data = response.data.data;
-        // console.log("data.state",data.state._id);
         setEventData(data);
 
-        // Set state with fetched data
         setName(data.name);
         setDescription(data.description);
         setAddress(data.address);
@@ -131,10 +111,9 @@ const UpdateEvent: React.FC<{
         setIsAds(data.isAds);
       } catch (error) {
         console.error('Error fetching event data:', error);
+        toast.error('Failed to load event data.');
       }
     };
-
-    // console.log("State ID:",selectedStateId);
 
     const fetchStates = async () => {
       try {
@@ -142,32 +121,45 @@ const UpdateEvent: React.FC<{
           headers: {
             Authorization: `Bearer ${currentUser.token}`,
           },
-        }); // Replace with your API endpoint
-        // console.log("State",response.data.data)
-        setStates(response.data.data); // Assuming the response returns an array of roles
+        });
+        setStates(response.data.data);
       } catch (error) {
         console.error('Error fetching states:', error);
       }
     };
 
-    fetchMovieData();
-    //  console.log("selectedStateId",selectedStateId);
+    fetchEventData();
     fetchStates();
-
-    fetchVenues(eventType);
   }, [eventId, currentUser.token]);
 
   useEffect(() => {
     if (selectedStateId) {
-      fetchCities(selectedStateId); // Fetch cities for the selected state
+      fetchCities(selectedStateId);
     }
-  }, [selectedStateId]); // Runs when selectedStateId updates
+  }, [selectedStateId]);
 
   useEffect(() => {
     if (eventType) {
-      fetchVenues(eventType); // Fetch venue
+      fetchVenues(eventType);
     }
-  }, [eventType]); // Runs when eventType updates
+  }, [eventType]);
+
+  const fetchCities = async (stateId: string) => {
+    try {
+      const response = await axios.post(
+        `${Urls.getCitiesListByState}`,
+        { state: stateId },
+        {
+          headers: {
+            Authorization: `Bearer ${currentUser.token}`,
+          },
+        },
+      );
+      setCities(response.data.data);
+    } catch (error) {
+      console.error('Error fetching cities:', error);
+    }
+  };
 
   const fetchVenues = async (eventType: string) => {
     try {
@@ -178,76 +170,40 @@ const UpdateEvent: React.FC<{
             Authorization: `Bearer ${currentUser.token}`,
           },
         },
-      ); // Replace with your API endpoint
-      console.log('Venue', response.data.data);
-      setVenues(response.data.data); // Assuming the response returns an array of roles
+      );
+      setVenues(response.data.data);
     } catch (error) {
-      console.error('Error fetching states:', error);
-    }
-  };
-
-  const fetchCities = async (selectedStateId: string) => {
-    try {
-      const response = await axios.post(
-        `${Urls.getCitiesListByState}`,
-        { state: selectedStateId },
-        {
-          headers: {
-            Authorization: `Bearer ${currentUser.token}`,
-          },
-        },
-      ); // Replace with your API endpoint
-      // console.log("City",response.data.data)
-      setCities(response.data.data); // Assuming the response returns an array of roles
-    } catch (error) {
-      console.error('Error fetching cities:', error);
+      console.error('Error fetching venues:', error);
     }
   };
 
   const handleAddGenre = () => setGenres([...genres, '']);
-  //const handleAddFormat = () => setFormats([...formats, '']);
   const handleAddLanguage = () => setLanguages([...languages, '']);
-  // const handleAddCast = () => setCast([...cast, { name: '', role: '' }]);
-  const handleBannerChange = () => {
-    setIsBanner(!isBanner);
-  };
-  const handleAdsChange = () => {
-    setIsAds(!isAds);
-  };
 
-  const handleEventTypeChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const eventType = event.target.value;
-    // console.log("eventType",eventType);
+  const handleEventTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const eventType = e.target.value;
     setEventType(eventType);
     fetchVenues(eventType);
   };
 
-  const handleStateChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedStateId = event.target.value;
-    // console.log("selectedStateId",selectedStateId);
-    fetchCities(selectedStateId);
-    setSelectedStateId(selectedStateId);
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const stateId = e.target.value;
+    setSelectedStateId(stateId);
+    fetchCities(stateId);
   };
 
-  const handleCityChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedCityId = event.target.value;
-    //  console.log("selectedCityId",selectedCityId);
-    setSelectedCityId(selectedCityId);
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCityId(e.target.value);
   };
 
-  const handleVenueChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedVenueId = event.target.value;
-    // console.log("selectedVenueId",selectedVenueId);
-    setSelectedVenueId(selectedVenueId);
+  const handleVenueChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedVenueId(e.target.value);
   };
 
   const now = new Date();
   const nextYear = new Date();
   nextYear.setFullYear(now.getFullYear() + 1);
 
-  // Format to "YYYY-MM-DDTHH:mm"
   const formatDateTimeLocal = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -267,61 +223,51 @@ const UpdateEvent: React.FC<{
       toast.error('Please enter the event name.');
       return;
     }
-
     if (!description) {
       toast.error('Please enter the event description.');
       return;
     }
-
     if (!eventType) {
       toast.error('Please select the event type.');
       return;
     }
-
     if (!artist) {
       toast.error('Please enter the artist name.');
       return;
     }
-
     if (!eventDate) {
       toast.error('Please select the event date.');
       return;
     }
-
     if (genres.length === 0) {
       toast.error('Please enter at least one genre.');
       return;
     }
-
     if (languages.length === 0) {
       toast.error('Please enter at least one language.');
       return;
     }
-
     if (!address) {
       toast.error('Please enter the address.');
       return;
     }
-
     if (!selectedStateId) {
       toast.error('Please select the state.');
       return;
     }
-
     if (!selectedCityId) {
       toast.error('Please select the city.');
       return;
     }
-
     if (!eventCategory) {
       toast.error('Please enter the event category.');
       return;
     }
-
     if (!selectedVenueId) {
       toast.error('Please select the venue.');
       return;
     }
+
     setIsLoading(true);
 
     const formData = new FormData();
@@ -331,9 +277,6 @@ const UpdateEvent: React.FC<{
     formData.append('eventType', eventType);
     formData.append('artist', artist);
     formData.append('eventDate', eventDate);
-    formData.append('eventImage', eventImage as Blob);
-    formData.append('bannerImage', bannerImage as Blob);
-    formData.append('advImage', advImage as Blob);
     formData.append('address', address);
     formData.append('state', selectedStateId);
     formData.append('city', selectedCityId);
@@ -341,8 +284,11 @@ const UpdateEvent: React.FC<{
     genres.forEach((genre) => formData.append('genre[]', genre));
     languages.forEach((language) => formData.append('language[]', language));
     formData.append('eventCategory', eventCategory);
-    formData.append('isBanner', isBanner ? 'true' : 'false');
-    formData.append('isAds', isAds ? 'true' : 'false');
+    formData.append('isBanner', String(isBanner));
+    formData.append('isAds', String(isAds));
+    if (eventImage) formData.append('eventImage', eventImage);
+    if (bannerImage) formData.append('bannerImage', bannerImage);
+    if (advImage) formData.append('advImage', advImage);
 
     try {
       const response = await axios.post(`${Urls.updateEvent}`, formData, {
@@ -352,34 +298,44 @@ const UpdateEvent: React.FC<{
         },
       });
       toast.success('Event data updated successfully!');
-
       if (onSubmitSuccess) {
         onSubmitSuccess(response.data);
       }
+      setIsOpen(false);
       onClose();
     } catch (error: any) {
       console.error('Error:', error);
-
       const errorMessage =
         error?.response?.data?.message ||
         'Oops! Something went wrong while updating the event. Please try again later.';
-
       toast.error(errorMessage);
     } finally {
-      setIsLoading(false); // Set loading to false after the request is completed
+      setIsLoading(false);
     }
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { type: 'spring', damping: 25, stiffness: 300 },
+    },
+    exit: {
+      opacity: 0,
+      y: 20,
+      scale: 0.95,
+      transition: { duration: 0.2 },
+    },
   };
 
   if (!eventData) {
     return (
-      <div
-        onClick={onClose}
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-999"
-      >
-        <div className="w-64 h-64 bg-white p-6 rounded-lg shadow-xl flex flex-col items-center justify-center space-y-4">
-          {/* Loader */}
-          <div className="animate-spin rounded-full border-t-4 border-blue-500 w-24 h-24 border-b-4 border-gray-200"></div>
-          <p className="text-xl text-gray-700 font-semibold">
+      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999]">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl flex flex-col items-center justify-center space-y-4">
+          <div className="animate-spin rounded-full border-t-4 border-indigo-500 w-12 h-12 border-b-4 border-slate-200"></div>
+          <p className="text-lg text-slate-700 dark:text-slate-200 font-semibold">
             Loading event data...
           </p>
         </div>
@@ -388,407 +344,427 @@ const UpdateEvent: React.FC<{
   }
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 bg-gray-800 flex items-center justify-center bg-black bg-opacity-50 z-999"
-    >
-      <form
-        onSubmit={handleFormSubmit}
-        onClick={(e) => e.stopPropagation()}
-        className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark p-6 w-full max-w-3xl space-y-4 max-h-[85vh] overflow-y-scroll transform translate-x-30"
-      >
-        <h2 className="text-xl font-bold">Update Event</h2>
-
-        {/* Movie Fields */}
-        <div>
-          <label className="block font-semibold mb-1">Name</label>
-          <input
-            type="text"
-            placeholder="Enter event name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full border rounded p-2 border-stroke bg-transparent py-3 px-5 outline-none transition dark:border-form-strokedark dark:bg-form-input"
-          />
-        </div>
-        <div>
-          <label className="block font-semibold mb-1">Description</label>
-          <textarea
-            value={description}
-            placeholder="Enter description"
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full border rounded p-2 border-stroke bg-transparent py-3 px-5 outline-none transition dark:border-form-strokedark dark:bg-form-input"
-          />
-        </div>
-
-        <div>
-          <label className="block font-semibold mb-1">Event Type</label>
-          <select
-            className="w-full border rounded p-2 border-stroke bg-transparent py-3 px-5 outline-none transition dark:border-form-strokedark dark:bg-form-input"
-            value={eventType}
-            onChange={handleEventTypeChange}
-            // onChange={(e) => setEventType(e.target.value)}
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+          onClick={() => {
+            setIsOpen(false);
+            onClose();
+          }}
+        >
+          <motion.div
+            className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
           >
-            <option value="" disabled>
-              Select Event Type
-            </option>
-            <option value="nonSitting">Non Sitting</option>
-            <option value="sitting">Sitting</option>
-          </select>
-          {/* {error && (
-                    <span className="text-red-500">{error}</span>
-                  )} */}
-        </div>
-
-        <div>
-          <label className="block font-semibold mb-1">Artist</label>
-          <input
-            type="text"
-            placeholder="Enter artist"
-            value={artist}
-            onChange={(e) => setArtist(e.target.value)}
-            className="w-full border rounded p-2 border-stroke bg-transparent py-3 px-5 outline-none transition dark:border-form-strokedark dark:bg-form-input"
-          />
-        </div>
-        <div>
-          <label className="block font-semibold mb-1">Event Date</label>
-          <input
-            type="datetime-local"
-            min={minDateTime}
-            max={maxDateTime}
-            value={eventDate}
-            onChange={(e) => setEventDate(e.target.value)}
-            className="w-full border rounded p-2 border-stroke bg-transparent py-3 px-5 outline-none transition dark:border-form-strokedark dark:bg-form-input"
-          />
-        </div>
-
-        {/* Genres */}
-        <div>
-          <label className="block font-semibold mb-1">Genres</label>
-          {genres.map((genre, index) => (
-            <div key={index} className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={genre}
-                onChange={(e) =>
-                  setGenres(
-                    genres.map((g, i) => (i === index ? e.target.value : g)),
-                  )
-                }
-                className="w-full border rounded p-2 mb-2"
-              />
-              <button
-                type="button"
-                onClick={() => setGenres(genres.filter((_, i) => i !== index))}
-                className="h-10 px-3 bg-red-500 text-white"
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+                Update Event
+              </h3>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => {
+                  setIsOpen(false);
+                  onClose();
+                }}
+                className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               >
-                Remove
-              </button>
+                <X size={20} />
+              </motion.button>
             </div>
-          ))}
-          <button
-            type="button"
-            onClick={handleAddGenre}
-            className="px-4 py-2 bg-blue-500 text-white"
-          >
-            Add Genre
-          </button>
-        </div>
 
-        {/* Languages */}
-        <div>
-          <label className="block font-semibold mb-1">Languages</label>
-          {languages.map((language, index) => (
-            <div key={index} className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={language}
-                onChange={(e) =>
-                  setLanguages(
-                    languages.map((l, i) => (i === index ? e.target.value : l)),
-                  )
-                }
-                className="w-full border rounded p-2 mb-2"
-              />
-              <button
-                type="button"
-                onClick={() =>
-                  setLanguages(languages.filter((_, i) => i !== index))
-                }
-                className="h-10 px-3 bg-red-500 text-white"
-              >
-                Remove
-              </button>
+            {/* Form */}
+            <div className="overflow-y-auto max-h-[calc(90vh-130px)] p-5 px-10">
+              <form onSubmit={handleFormSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column */}
+                  <div className="space-y-6">
+                    <FormField label="Event Name" name="name">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                          <LayoutList className="h-4 w-4 text-slate-400" />
+                        </div>
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="w-full rounded-md border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                          placeholder="Enter event name"
+                        />
+                      </div>
+                    </FormField>
+
+                    <FormField label="Description" name="description">
+                      <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        rows={3}
+                        className="w-full rounded-md border py-2.5 px-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="Enter event description"
+                      />
+                    </FormField>
+
+                    <FormField label="Event Type" name="eventType">
+                      <select
+                        value={eventType}
+                        onChange={handleEventTypeChange}
+                        className="w-full rounded-md border py-2.5 px-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                      >
+                        <option value="" disabled>
+                          Select Event Type
+                        </option>
+                        <option value="nonSitting">Non Sitting</option>
+                        <option value="sitting">Sitting</option>
+                      </select>
+                    </FormField>
+
+                    <FormField label="Artist" name="artist">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                          <User className="h-4 w-4 text-slate-400" />
+                        </div>
+                        <input
+                          type="text"
+                          value={artist}
+                          onChange={(e) => setArtist(e.target.value)}
+                          className="w-full rounded-md border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                          placeholder="Enter artist name"
+                        />
+                      </div>
+                    </FormField>
+
+                    <FormField label="Event Date" name="eventDate">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                          <Calendar className="h-4 w-4 text-slate-400" />
+                        </div>
+                        <input
+                          type="datetime-local"
+                          min={minDateTime}
+                          max={maxDateTime}
+                          value={eventDate}
+                          onChange={(e) => setEventDate(e.target.value)}
+                          className="w-full rounded-md border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </FormField>
+
+                    <FormField label="Address" name="address">
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                          <MapPin className="h-4 w-4 text-slate-400" />
+                        </div>
+                        <input
+                          type="text"
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          className="w-full rounded-md border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                          placeholder="Enter address"
+                        />
+                      </div>
+                    </FormField>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="space-y-6">
+                    <FormField label="State" name="state">
+                      <select
+                        value={selectedStateId}
+                        onChange={handleStateChange}
+                        className="w-full rounded-md border py-2.5 px-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                      >
+                        <option value="" disabled>
+                          Select State
+                        </option>
+                        {states.map((state) => (
+                          <option key={state._id} value={state._id} className="capitalize">
+                            {state.name}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+
+                    <FormField label="City" name="city">
+                      <select
+                        value={selectedCityId}
+                        onChange={handleCityChange}
+                        className="w-full rounded-md border py-2.5 px-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                      >
+                        <option value="" disabled>
+                          Select City
+                        </option>
+                        {cities.map((city) => (
+                          <option key={city._id} value={city._id} className="capitalize">
+                            {city.name}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+
+                    <FormField label="Venue" name="venue">
+                      <select
+                        value={selectedVenueId}
+                        onChange={handleVenueChange}
+                        className="w-full rounded-md border py-2.5 px-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                      >
+                        <option value="" disabled>
+                          Select Venue
+                        </option>
+                        {venues.map((venue) => (
+                          <option key={venue._id} value={venue._id} className="capitalize">
+                            {venue.name}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+
+                    <FormField label="Event Category" name="eventCategory">
+                      <select
+                        value={eventCategory}
+                        onChange={(e) => setEventCategory(e.target.value)}
+                        className="w-full rounded-md border py-2.5 px-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                      >
+                        <option value="">Select a category</option>
+                        <optgroup label="Music">
+                          <option value="music">Music</option>
+                        </optgroup>
+                        <optgroup label="Sports">
+                          <option value="football">Football</option>
+                          <option value="cricket">Cricket</option>
+                          <option value="sports">Other Sports</option>
+                        </optgroup>
+                        <optgroup label="Theatre">
+                          <option value="theatre">Theatre</option>
+                        </optgroup>
+                        <optgroup label="Comedy">
+                          <option value="comedy">Comedy</option>
+                        </optgroup>
+                        <optgroup label="Workshops">
+                          <option value="workshops">Workshops</option>
+                        </optgroup>
+                        <optgroup label="Exhibitions">
+                          <option value="exhibitions">Exhibitions</option>
+                        </optgroup>
+                        <optgroup label="Festivals">
+                          <option value="festivals">Festivals</option>
+                        </optgroup>
+                        <optgroup label="Conferences">
+                          <option value="conferences">Conferences</option>
+                        </optgroup>
+                        <optgroup label="Shadi">
+                          <option value="haldi">Haldi</option>
+                          <option value="mehndi">Mehndi</option>
+                          <option value="sagai">Sagai</option>
+                        </optgroup>
+                        <optgroup label="Others">
+                          <option value="others">Others</option>
+                        </optgroup>
+                      </select>
+                    </FormField>
+
+                    <FormField label="Genres" name="genres">
+                      <div className="space-y-2">
+                        {genres.map((genre, index) => (
+                          <div key={index} className="flex gap-2">
+                            <div className="relative flex-1">
+                              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <Tag className="h-4 w-4 text-slate-400" />
+                              </div>
+                              <input
+                                type="text"
+                                value={genre}
+                                onChange={(e) =>
+                                  setGenres(
+                                    genres.map((g, i) => (i === index ? e.target.value : g)),
+                                  )
+                                }
+                                className="w-full rounded-md border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                                placeholder="Enter genre"
+                              />
+                            </div>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              type="button"
+                              onClick={() => setGenres(genres.filter((_, i) => i !== index))}
+                              className="px-3 py-2 bg-red-500 text-white rounded-md"
+                            >
+                              <X size={16} />
+                            </motion.button>
+                          </div>
+                        ))}
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          type="button"
+                          onClick={handleAddGenre}
+                          className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                        >
+                          + Add Genre
+                        </motion.button>
+                      </div>
+                    </FormField>
+
+                    <FormField label="Languages" name="languages">
+                      <div className="space-y-2">
+                        {languages.map((language, index) => (
+                          <div key={index} className="flex gap-2">
+                            <div className="relative flex-1">
+                              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <Languages className="h-4 w-4 text-slate-400" />
+                              </div>
+                              <input
+                                type="text"
+                                value={language}
+                                onChange={(e) =>
+                                  setLanguages(
+                                    languages.map((l, i) => (i === index ? e.target.value : l)),
+                                  )
+                                }
+                                className="w-full rounded-md border py-2.5 pl-10 pr-4 text-sm outline-none transition-colors border-slate-300 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500"
+                                placeholder="Enter language"
+                              />
+                            </div>
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              type="button"
+                              onClick={() => setLanguages(languages.filter((_, i) => i !== index))}
+                              className="px-3 py-2 bg-red-500 text-white rounded-md"
+                            >
+                              <X size={16} />
+                            </motion.button>
+                          </div>
+                        ))}
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          type="button"
+                          onClick={handleAddLanguage}
+                          className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                        >
+                          + Add Language
+                        </motion.button>
+                      </div>
+                    </FormField>
+                  </div>
+                </div>
+
+                {/* Image Uploads */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField label="Event Image (104 × 123 px)" name="eventImage">
+                    <ImageUploader
+                      onImageChange={(file: any) => setEventImage(file)}
+                      selectedImage={eventImage}
+                      existingImage={existingEventImage}
+                    />
+                  </FormField>
+
+                  <FormField label="Banner Image (345 × 153 px)" name="bannerImage">
+                    <ImageUploader
+                      onImageChange={(file: any) => setBannerImage(file)}
+                      selectedImage={bannerImage}
+                      existingImage={existingBannerImage}
+                    />
+                  </FormField>
+
+                  <FormField label="Advertisement Image (306 × 485 px)" name="advImage">
+                    <ImageUploader
+                      onImageChange={(file: any) => setAdvImage(file)}
+                      selectedImage={advImage}
+                      existingImage={existingAdvImage}
+                    />
+                  </FormField>
+                </div>
+
+                {/* Checkboxes */}
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={isBanner}
+                      onChange={(e) => setIsBanner(e.target.checked)}
+                      className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-slate-700">Banner</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={isAds}
+                      onChange={(e) => setIsAds(e.target.checked)}
+                      className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-slate-700">Ads</span>
+                  </label>
+                </div>
+
+                {/* Form Actions */}
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-slate-200 dark:border-slate-700 pt-5">
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    type="button"
+                    onClick={() => {
+                      setIsOpen(false);
+                      onClose();
+                    }}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full sm:w-auto relative overflow-hidden rounded-md py-2.5 px-6 font-medium text-white disabled:opacity-70"
+                    style={{
+                      background: 'linear-gradient(to right, #6366F1, #8B5CF6)',
+                    }}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center justify-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Updating...
+                      </span>
+                    ) : (
+                      'Update Event'
+                    )}
+                  </motion.button>
+                </div>
+              </form>
+              {error && <p className="text-red-500 mt-4">{error}</p>}
             </div>
-          ))}
-          <button
-            type="button"
-            onClick={handleAddLanguage}
-            className="px-4 py-2 bg-blue-500 text-white"
-          >
-            Add Language
-          </button>
+          </motion.div>
         </div>
-
-        {/* Movie Image */}
-        <div className="flex flex-col">
-          <label className="block font-semibold mb-1">
-            Event Image (104 × 123 px)
-          </label>
-          {/* {existingMovieImage && (
-            <img
-              src={existingMovieImage}
-              alt="Movie"
-              className="w-40 h-40 object-cover mb-2"
-            />
-          )} */}
-          <input
-            type="file"
-            className="w-full border rounded p-2"
-            onChange={(e) => setEventImage(e.target.files?.[0] || null)}
-            accept="image/*"
-          />
-        </div>
-
-        {/* Banner Image */}
-        <div className="flex flex-col">
-          <label className="block font-semibold mb-1">
-            Banner Image (345 × 153 px)
-          </label>
-          {/* {existingMovieImage && (
-            <img
-              src={existingMovieImage}
-              alt="Movie"
-              className="w-40 h-40 object-cover mb-2"
-            />
-          )} */}
-          <input
-            type="file"
-            className="w-full border rounded p-2"
-            onChange={(e) => setBannerImage(e.target.files?.[0] || null)}
-            accept="image/*"
-          />
-        </div>
-
-        {/* Adv Image */}
-        <div className="flex flex-col">
-          <label className="block font-semibold mb-1">
-            Adv Image (306 × 485 px)
-          </label>
-          {/* {existingMovieImage && (
-            <img
-              src={existingMovieImage}
-              alt="Movie"
-              className="w-40 h-40 object-cover mb-2"
-            />
-          )} */}
-          <input
-            type="file"
-            className="w-full border rounded p-2"
-            onChange={(e) => setAdvImage(e.target.files?.[0] || null)}
-            accept="image/*"
-          />
-        </div>
-        <div>
-          <label className="block font-semibold mb-1">Address</label>
-          <input
-            type="text"
-            placeholder="Enter address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="w-full border rounded p-2 border-stroke bg-transparent py-3 px-5 outline-none transition dark:border-form-strokedark dark:bg-form-input"
-            required
-          />
-        </div>
-
-        {/* State Details */}
-        <div className="mb-4.5">
-          <label className="block font-semibold mb-1">Select State</label>
-          <select
-            id="state"
-            value={selectedStateId}
-            onChange={handleStateChange}
-            className={`relative z-20 w-full appearance-none rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input `}
-          >
-            <option value="" disabled className="text-body dark:text-bodydark">
-              Select State
-            </option>
-            {states.map((state) => (
-              <option
-                key={state._id}
-                value={state._id}
-                className="text-body dark:text-bodydark capitalize"
-              >
-                {state.name}
-              </option>
-            ))}
-          </select>
-          {/* {error && (
-                    <span className="text-red-500">{error}</span>
-                  )} */}
-        </div>
-
-        {/* Cities Details */}
-        <div className="mb-4.5">
-          <label className="block font-semibold mb-1">Select City</label>
-          <select
-            id="city"
-            value={selectedCityId}
-            onChange={handleCityChange}
-            className={`relative z-20 w-full appearance-none rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input `}
-          >
-            <option value="" disabled className="text-body dark:text-bodydark">
-              Select City
-            </option>
-            {cities.map((city) => (
-              <option
-                key={city._id}
-                value={city._id}
-                className="text-body dark:text-bodydark capitalize"
-              >
-                {city.name}
-              </option>
-            ))}
-          </select>
-          {/* {error && (
-                    <span className="text-red-500">{error}</span>
-                  )} */}
-        </div>
-
-        <div>
-          <label className="block font-semibold mb-1">Event Category</label>
-          <select
-            value={eventCategory}
-            onChange={(e) => setEventCategory(e.target.value)}
-            className="w-full border rounded p-2 border-stroke bg-transparent py-3 px-5 outline-none transition dark:border-form-strokedark dark:bg-form-input"
-          >
-            <option value="">Select a category</option>
-
-            <optgroup label="Music">
-              <option value="music">Music</option>
-            </optgroup>
-
-            <optgroup label="Sports">
-              <option value="football">Football</option>
-              <option value="cricket">Cricket</option>
-              <option value="sports">Other Sports</option>
-            </optgroup>
-
-            <optgroup label="Theatre">
-              <option value="theatre">Theatre</option>
-            </optgroup>
-
-            <optgroup label="Comedy">
-              <option value="comedy">Comedy</option>
-            </optgroup>
-
-            <optgroup label="Workshops">
-              <option value="workshops">Workshops</option>
-            </optgroup>
-
-            <optgroup label="Exhibitions">
-              <option value="exhibitions">Exhibitions</option>
-            </optgroup>
-
-            <optgroup label="Festivals">
-              <option value="festivals">Festivals</option>
-            </optgroup>
-
-            <optgroup label="Conferences">
-              <option value="conferences">Conferences</option>
-            </optgroup>
-
-            <optgroup label="Shadi">
-              <option value="haldi">Haldi</option>
-              <option value="mehndi">Mehndi</option>
-              <option value="sagai">Sagai</option>
-            </optgroup>
-
-            <optgroup label="Others">
-              <option value="others">Others</option>
-            </optgroup>
-          </select>
-        </div>
-
-        <div className="mb-4.5">
-          <label className="block font-semibold mb-1">Select Venue</label>
-          <select
-            id="venue"
-            value={selectedVenueId}
-            onChange={handleVenueChange}
-            className={`relative z-20 w-full appearance-none rounded border border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary dark:border-form-strokedark dark:bg-form-input `}
-          >
-            <option value="" disabled className="text-body dark:text-bodydark">
-              Select Venue
-            </option>
-            {venues.map((venue) => (
-              <option
-                key={venue._id}
-                value={venue._id}
-                className="text-body dark:text-bodydark capitalize"
-              >
-                {venue.name}
-              </option>
-            ))}
-          </select>
-          {/* {error && (
-                    <span className="text-red-500">{error}</span>
-                  )} */}
-        </div>
-
-        <div className="flex items-center space-x-4">
-          {/* First Checkbox */}
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="checkbox1"
-              checked={isBanner}
-              onChange={handleBannerChange}
-              className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-            />
-            <label
-              htmlFor="checkbox1"
-              className="text-sm font-medium text-gray-700"
-            >
-              Banner
-            </label>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="checkbox2"
-              checked={isAds}
-              onChange={handleAdsChange}
-              className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-            />
-            <label
-              htmlFor="checkbox2"
-              className="text-sm font-medium text-gray-700"
-            >
-              Ads
-            </label>
-          </div>
-        </div>
-
-        <div className="flex gap-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex w-full justify-center rounded bg-slate-300 p-3 font-medium text-black hover:bg-opacity-90"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="flex w-full justify-center rounded bg-[#865BFF] hover:bg-[#6a48c9] p-3 font-medium text-gray hover:bg-opacity-90"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Updating...' : 'Update'}
-          </button>
-        </div>
-        {error && <p className="text-red-500">{error}</p>}
-      </form>
-    </div>
+      )}
+    </AnimatePresence>
   );
 };
 

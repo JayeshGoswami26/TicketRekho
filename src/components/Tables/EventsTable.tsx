@@ -85,18 +85,14 @@ const EventsTable: React.FC = () => {
 
   const formatUTCDate = (date: string | Date) => {
     try {
-      const utcDate = new Date(date); // Parse the UTC date string
-
-      // Adjust the date to your desired local timezone (in this case Asia/Kolkata)
+      const utcDate = new Date(date);
       const localDate = new Date(
         utcDate.getTime() + utcDate.getTimezoneOffset() * 60000,
       );
-
-      // Format the local date to "yyyy-MM-dd HH:mm"
       return format(localDate, 'yyyy-MM-dd HH:mm');
     } catch (error) {
       console.error('Error formatting time:', error);
-      return ''; // Return an empty string in case of an error
+      return '';
     }
   };
 
@@ -126,17 +122,15 @@ const EventsTable: React.FC = () => {
 
   const formatName = (str: string) => {
     return str
-      .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space before capital letters
-      .split(' ') // Split into words
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
-      .join(' '); // Join words back
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   const fetchEvents = async (page: number, limit: number, search: string) => {
     try {
       setLoading(true);
-
-      // Convert 'Active'/'Inactive' search to boolean
       let searchQuery = search;
       if (search.toLowerCase() === 'released') {
         searchQuery = 'true';
@@ -144,11 +138,8 @@ const EventsTable: React.FC = () => {
         searchQuery = 'false';
       }
 
-      // Fetch data from API
       const response = await axios.get(
-        `${
-          Urls.getAllEventsByManagerId
-        }?page=${page}&limit=${limit}&search=${encodeURIComponent(
+        `${Urls.getAllEventsByManagerId}?page=${page}&limit=${limit}&search=${encodeURIComponent(
           searchQuery,
         )}`,
         {
@@ -203,14 +194,14 @@ const EventsTable: React.FC = () => {
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       fetchEvents(currentPage, itemsPerPage, searchTerm);
-    }, 400); // Add debounce delay
+    }, 400);
 
     return () => clearTimeout(delayDebounce);
   }, [currentPage, itemsPerPage, searchTerm, activeTab]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // reset to first page on new search
+    setCurrentPage(1);
   };
 
   const handleSort = (key: keyof Events) => {
@@ -218,7 +209,7 @@ const EventsTable: React.FC = () => {
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
     }
-    const sortedSellers = [...sellers].sort((a : any, b : any) => {
+    const sortedSellers = [...sellers].sort((a: any, b: any) => {
       if (a[key] < b[key]) {
         return direction === 'ascending' ? -1 : 1;
       }
@@ -261,16 +252,13 @@ const EventsTable: React.FC = () => {
               event.id === id ? { ...event, isActive: updatedStatus } : event,
             ),
           );
-          // Show success toast
           toast.success('Event status changed successfully!');
         } else {
-          // Show error toast if the status is false
           toast.error('Failed to change the event status.');
         }
       })
       .catch((error) => {
         console.error('Error changing the event status:', error);
-        // Show error toast for network or server issues
         toast.error('Error changing the event status. Please try again.');
       });
   };
@@ -285,7 +273,7 @@ const EventsTable: React.FC = () => {
       confirmButtonText: 'Yes, delete it!',
       cancelButtonText: 'Cancel',
       reverseButtons: true,
-      position: 'center', // Ensure modal is centered
+      position: 'center',
       customClass: {
         confirmButton: 'swal2-confirm-custom',
         cancelButton: 'swal2-cancel-custom',
@@ -313,21 +301,16 @@ const EventsTable: React.FC = () => {
           setSellers((prevEvents) =>
             prevEvents.filter((event) => event.id !== id),
           );
-
-          // Show success toast
           toast.success('Event deleted successfully!');
         } else {
-          // Show error toast if the status is false
           toast.error('Failed to delete the event.');
         }
       })
       .catch((error: any) => {
         console.error('Error:', error);
-
         const errorMessage =
           error?.response?.data?.message ||
           'Oops! Something went wrong while deleting the event. Please try again later.';
-
         toast.error(errorMessage);
       });
   };
@@ -348,7 +331,6 @@ const EventsTable: React.FC = () => {
   const filteredBanners = sellers.filter((seller) => {
     const search = searchTerm.toLowerCase();
     const isBanner = seller.isBanner ? 'active' : 'inactive';
-
     if (seller.isBanner) {
       return (
         seller.name?.toLowerCase().includes(search) ||
@@ -363,7 +345,6 @@ const EventsTable: React.FC = () => {
   const filteredAdvertisements = sellers.filter((seller) => {
     const search = searchTerm.toLowerCase();
     const isAds = seller.isAds ? 'active' : 'inactive';
-
     if (seller.isAds) {
       return (
         seller.name?.toLowerCase().includes(search) ||
@@ -409,7 +390,7 @@ const EventsTable: React.FC = () => {
         <button
           className={`px-4 py-2 font-medium ${
             activeTab === 'events'
-              ? 'text-primary border-b-2 border-primary'
+              ? 'text-transparent bg-clip-text bg-indigo-purple border-b-2 border-primary'
               : 'text-black dark:text-white'
           }`}
           onClick={() => handleTabChange('events')}
@@ -419,7 +400,7 @@ const EventsTable: React.FC = () => {
         <button
           className={`px-4 py-2 font-medium ${
             activeTab === 'banners'
-              ? 'text-primary border-b-2 border-primary'
+              ? 'text-transparent bg-clip-text bg-indigo-purple border-b-2 border-primary'
               : 'text-black dark:text-white'
           }`}
           onClick={() => handleTabChange('banners')}
@@ -429,7 +410,7 @@ const EventsTable: React.FC = () => {
         <button
           className={`px-4 py-2 font-medium ${
             activeTab === 'advertisements'
-              ? 'text-primary border-b-2 border-primary'
+              ? 'text-transparent bg-clip-text bg-indigo-purple border-b-2 border-primary'
               : 'text-black dark:text-white'
           }`}
           onClick={() => handleTabChange('advertisements')}
@@ -453,7 +434,7 @@ const EventsTable: React.FC = () => {
 
       {/* Image Preview Modal */}
       {previewImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
           <div className="bg-white dark:bg-boxdark rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-black dark:text-white">
@@ -483,192 +464,168 @@ const EventsTable: React.FC = () => {
 
       <div className="max-w-full overflow-x-auto">
         {activeTab === 'events' && (
-          <table className="w-full table-auto">
-            <thead>
-              <tr className="bg-gray-2 text-left dark:bg-meta-4">
+          <table className="w-full bg-slate-100 text-sm text-left text-gray-700 dark:text-gray-200">
+            <thead className="text-xs text-white uppercase bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-600 dark:to-purple-600">
+              <tr>
                 <th
-                  className="min-w-[220px] py-4 px-4 font-bold text-black dark:text-white xl:pl-11 cursor-pointer text-center"
+                  scope="col"
+                  className="px-6 py-4 text-center rounded-tl-lg cursor-pointer"
                   onClick={() => handleSort('name')}
                 >
                   Event {renderSortIcon('name')}
                 </th>
                 <th
-                  className="min-w-[220px] py-4 px-4 font-bold text-black dark:text-white xl:pl-11 cursor-pointer text-center"
+                  scope="col"
+                  className="px-6 py-4 text-center cursor-pointer"
                   onClick={() => handleSort('city')}
                 >
                   City {renderSortIcon('city')}
                 </th>
                 <th
-                  className="min-w-[120px] py-4 px-4 font-bold text-black dark:text-white cursor-pointer text-center"
+                  scope="col"
+                  className="px-6 py-4 text-center cursor-pointer"
                   onClick={() => handleSort('eventType')}
                 >
                   Type {renderSortIcon('eventType')}
                 </th>
                 <th
-                  className="min-w-[220px] py-4 px-4 font-bold text-black dark:text-white xl:pl-11 cursor-pointer text-center"
+                  scope="col"
+                  className="px-6 py-4 text-center cursor-pointer"
                   onClick={() => handleSort('eventDate')}
                 >
                   Date {renderSortIcon('eventDate')}
                 </th>
                 <th
-                  className="min-w-[150px] py-4 px-4 font-bold text-black dark:text-white cursor-pointer text-center"
+                  scope="col"
+                  className="px-6 py-4 text-center cursor-pointer"
                   onClick={() => handleSort('totalEarnings')}
                 >
                   Earnings {renderSortIcon('totalEarnings')}
                 </th>
                 <th
-                  className="min-w-[120px] py-4 px-4 font-bold text-black dark:text-white cursor-pointer text-center"
+                  scope="col"
+                  className="px-6 py-4 text-center cursor-pointer"
                   onClick={() => handleSort('isActive')}
                 >
                   Launch {renderSortIcon('isActive')}
                 </th>
-                <th className="min-w-[120px] py-4 px-4 font-bold text-black dark:text-white cursor-pointer text-center">
+                <th scope="col" className="px-6 py-4 text-center rounded-tr-lg">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading
-                ? Array(5)
-                    .fill(0)
-                    .map((_, index) => (
-                      <tr key={index}>
-                        <td className="py-4 px-4">
-                          <div className="animate-pulse flex space-x-4">
-                            <div className="h-12.5 w-15 rounded-md bg-slate-200 dark:bg-slate-300 "></div>
-                            <div className="flex-1 space-y-4 py-1 items-center flex ">
-                              <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full"></div>
-                            </div>
-                          </div>
+                ? [...Array(5)].map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex flex-col items-center">
+                          <div className="w-12 h-12 bg-slate-300 rounded-md mb-2"></div>
+                          <div className="h-4 bg-slate-300 w-24 rounded"></div>
+                        </div>
+                      </td>
+                      {[...Array(5)].map((_, i) => (
+                        <td key={i} className="px-6 py-4 text-center">
+                          <div className="h-4 bg-slate-300 rounded w-full"></div>
                         </td>
-                        <td className="py-4 px-4">
-                          <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                        </td>
-                      </tr>
-                    ))
-                : filteredEvents.map((event, index) => (
+                      ))}
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex justify-center gap-2">
+                          <div className="w-6 h-6 bg-slate-300 rounded-full"></div>
+                          <div className="w-6 h-6 bg-slate-300 rounded-full"></div>
+                          <div className="w-6 h-6 bg-slate-300 rounded-full"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                : filteredEvents.map((event, i) => (
                     <tr
-                      key={index}
+                      key={i}
+                      className="hover:bg-indigo-700/10 dark:hover:bg-indigo-700/10 transition"
                       onClick={(e) => {
                         e.stopPropagation();
-
                         if (event.eventType === 'Sitting') {
                           handleSittingClick(event.id);
                         } else if (event.eventType === 'Non Sitting') {
                           handleNonSittingClick(event.id);
                         }
                       }}
-                      className="cursor-pointer"
                     >
-                      <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark flex items-center text-center">
-                        <img
-                          src={
-                            event.eventImage ||
-                            'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png?20170328184010'
-                          }
-                          alt={event.name}
-                          className="h-12.5 w-15 rounded-md mr-4"
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png?20170328184010';
-                          }}
-                        />
-
-                        <h5 className="font-medium text-black dark:text-white ">
-                          {event.name}
-                        </h5>
+                      <td className="px-6 py-5 text-center">
+                        <div className="flex flex-col items-center">
+                          <img
+                            src={event.eventImage}
+                            alt={event.name}
+                            onError={(e) =>
+                              (e.currentTarget.src =
+                                '../../../public/Image/Fallback Image/default-fallback-image.png')
+                            }
+                            className="w-30 h-12 object-cover rounded-md mb-1"
+                          />
+                          <span className="font-semibold text-sm truncate w-[8rem]">
+                            {event.name}
+                          </span>
+                        </div>
                       </td>
-
-                      <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                        <p className="text-black dark:text-white">
-                          {event.city}
-                        </p>
+                      <td className="px-6 py-5 text-center">{event.city}</td>
+                      <td className="px-6 py-5 text-center">{event.eventType}</td>
+                      <td className="px-6 py-5 text-center">
+                        {new Date(event.eventDate).toLocaleString(undefined, {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false,
+                        })}
                       </td>
-                      <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                        <p className="text-black dark:text-white">
-                          {event.eventType}
-                        </p>
+                      <td className="px-6 py-5 text-center">
+                        ₹{Number(event.totalEarnings).toLocaleString()}
                       </td>
-                      <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                        <p className="text-black dark:text-white">
-                          {new Date(event.eventDate).toLocaleString(undefined, {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: false,
-                          })}
-                        </p>
-                      </td>
-                      <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                        <p className="text-black dark:text-white">
-                          ₹{Number(event.totalEarnings).toLocaleString()}
-                        </p>
-                      </td>
-
-                      <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
+                      <td className="px-6 py-5 text-center">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleStatus(
-                              event.id,
-                              event.isActive ? true : false,
-                            );
+                            toggleStatus(event.id, event.isActive);
                           }}
-                          className={`inline-flex rounded-full bg-opacity-10 py-1 px-3 text-sm font-medium ${
-                            event.isActive == true
-                              ? 'bg-success text-success'
-                              : 'bg-danger text-danger'
+                          className={`inline-flex items-center justify-center rounded-full text-xs font-semibold px-3 py-1 transition ${
+                            event.isActive
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-800 dark:text-white'
+                              : 'bg-rose-100 text-rose-700 dark:bg-rose-800 dark:text-white'
                           }`}
                         >
                           {event.isActive ? 'Released' : 'Unreleased'}
                         </button>
                       </td>
-
-                      <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                        <div className="flex gap-2">
+                      <td className="px-6 py-5 text-center">
+                        <div className="flex justify-center space-x-3">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEditClick(event.id);
                             }}
-                            className="p-2 text-sm font-medium rounded-md focus:outline-none hover:text-[#472DA9]"
+                            className="text-indigo-500 hover:text-indigo-700 transition"
+                            title="Edit"
                           >
                             <FontAwesomeIcon icon={faEdit} />
                           </button>
-
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleGrabaBiteClick(event.id);
                             }}
-                            className="p-2 text-sm font-medium rounded-md focus:outline-none hover:text-[#472DA9]"
+                            className="text-indigo-500 hover:text-indigo-700 transition"
+                            title="Grab a Bite"
                           >
                             <FontAwesomeIcon icon={faHamburger} />
                           </button>
-
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDelete(event.id);
                             }}
-                            className="p-2 text-sm font-medium rounded-md hover:text-[#d43232] focus:outline-none "
+                            className="text-red-500 hover:text-red-700 transition"
+                            title="Delete"
                           >
                             <FontAwesomeIcon icon={faTrashAlt} />
                           </button>
@@ -681,66 +638,76 @@ const EventsTable: React.FC = () => {
         )}
 
         {activeTab === 'banners' && (
-          <table className="w-full table-auto">
-            <thead>
-              <tr className="bg-gray-2 text-left dark:bg-meta-4">
-                <th className="min-w-[220px] py-4 px-4 font-bold text-black dark:text-white text-center">
-                  Banner
-                </th>
-                <th className="min-w-[220px] py-4 px-4 font-bold text-black dark:text-white text-center">
-                  Title
-                </th>
-                <th className="min-w-[120px] py-4 px-4 font-bold text-black dark:text-white text-center">
-                  Actions
-                </th>
+          <table className="w-full bg-slate-100 text-sm text-left text-gray-700 dark:text-gray-200">
+            <thead className="text-xs text-white uppercase bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-600 dark:to-purple-600">
+              <tr>
+                <th className="px-6 py-4 text-center rounded-tl-lg">Banner</th>
+                <th className="px-6 py-4 text-center">Title</th>
+                <th className="px-6 py-4 text-center rounded-tr-lg">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
-                Array(3)
-                  .fill(0)
-                  .map((_, index) => (
-                    <tr key={index}>
-                      <td className="py-4 px-4">
-                        <div className="animate-pulse flex justify-center">
-                          <div className="h-10 w-32 bg-slate-200 dark:bg-slate-300 rounded"></div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                      </td>
-                    </tr>
-                  ))
+                [...Array(3)].map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex flex-col items-center">
+                        <div className="w-30 h-12 bg-slate-300 rounded-md mb-2"></div>
+                        <div className="h-4 bg-slate-300 w-24 rounded"></div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="h-4 bg-slate-300 rounded w-full"></div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center gap-2">
+                        <div className="w-6 h-6 bg-slate-300 rounded-full"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : filteredBanners.length > 0 ? (
-                filteredBanners.map((banner, index) => (
-                  <tr key={index} className="cursor-pointer">
-                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                      <div className="flex justify-center">
+                filteredBanners.map((banner, i) => (
+                  <tr
+                    key={i}
+                    className="hover:bg-indigo-700/10 dark:hover:bg-gray-800 transition"
+                  >
+                    <td className="px-6 py-5 text-center">
+                      <div className="flex flex-col items-center">
+                        <img
+                          src={banner.bannerImage}
+                          alt={banner.name}
+                          onError={(e) =>
+                            (e.currentTarget.src =
+                              '../../../public/Image/Fallback Image/default-fallback-image.png')
+                          }
+                          className="w-30 h-12 object-cover rounded-md mb-1"
+                        />
                         <button
                           onClick={() =>
-                            handleImagePreview(
-                              banner.name,
-                              banner.bannerImage || '',
-                            )
+                            handleImagePreview(banner.name, banner?.bannerImage)
                           }
-                          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-2 rounded-md"
+                          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                         >
-                          <FontAwesomeIcon icon={faImage} className="mr-2" />
                           View Image
                         </button>
                       </div>
                     </td>
-                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                      <p className="text-black dark:text-white">
+                    <td className="px-6 py-5 text-center">
+                      <span className="font-semibold text-sm inline-block">
                         {banner.name}
-                      </p>
+                      </span>
                     </td>
-                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                      <div>
-                        <button className="p-2 text-sm font-medium rounded-md hover:text-[#d43232] focus:outline-none">
+                    <td className="px-6 py-5 text-center">
+                      <div className="flex justify-center space-x-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(banner.id);
+                          }}
+                          className="text-red-500 hover:text-red-700 transition"
+                          title="Delete"
+                        >
                           <FontAwesomeIcon icon={faTrashAlt} />
                         </button>
                       </div>
@@ -762,64 +729,78 @@ const EventsTable: React.FC = () => {
         )}
 
         {activeTab === 'advertisements' && (
-          <table className="w-full table-auto">
-            <thead>
-              <tr className="bg-gray-2 text-left dark:bg-meta-4">
-                <th className="min-w-[220px] py-4 px-4 font-bold text-black dark:text-white text-center">
+          <table className="w-full bg-slate-100 text-sm text-left text-gray-700 dark:text-gray-200">
+            <thead className="text-xs text-white uppercase bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-600 dark:to-purple-600">
+              <tr>
+                <th className="px-6 py-4 text-center rounded-tl-lg">
                   Advertisement
                 </th>
-                <th className="min-w-[220px] py-4 px-4 font-bold text-black dark:text-white text-center">
-                  Title
-                </th>
-                <th className="min-w-[120px] py-4 px-4 font-bold text-black dark:text-white text-center">
-                  Actions
-                </th>
+                <th className="px-6 py-4 text-center">Title</th>
+                <th className="px-6 py-4 text-center rounded-tr-lg">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
-                Array(3)
-                  .fill(0)
-                  .map((_, index) => (
-                    <tr key={index}>
-                      <td className="py-4 px-4">
-                        <div className="animate-pulse flex justify-center">
-                          <div className="h-10 w-32 bg-slate-200 dark:bg-slate-300 rounded"></div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                      </td>
-                    </tr>
-                  ))
+                [...Array(3)].map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex flex-col items-center">
+                        <div className="w-30 h-12 bg-slate-300 rounded-md mb-2"></div>
+                        <div className="h-4 bg-slate-300 w-24 rounded"></div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="h-4 bg-slate-300 rounded w-full"></div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center gap-2">
+                        <div className="w-6 h-6 bg-slate-300 rounded-full"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : filteredAdvertisements.length > 0 ? (
-                filteredAdvertisements.map((ad, index) => (
-                  <tr key={index} className="cursor-pointer">
-                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                      <div className="flex justify-center">
+                filteredAdvertisements.map((ad, i) => (
+                  <tr
+                    key={i}
+                    className="hover:bg-indigo-700/10 dark:hover:bg-gray-800 transition"
+                  >
+                    <td className="px-6 py-5 text-center">
+                      <div className="flex flex-col items-center">
+                        <img
+                          src={ad.advertisementImage}
+                          alt={ad.name}
+                          onError={(e) =>
+                            (e.currentTarget.src =
+                              '../../../public/Image/Fallback Image/default-fallback-image.png')
+                          }
+                          className="w-30 h-12 object-cover rounded-md mb-1"
+                        />
                         <button
                           onClick={() =>
-                            handleImagePreview(
-                              ad.name,
-                              ad.advertisementImage || '',
-                            )
+                            handleImagePreview(ad.name, ad?.advertisementImage)
                           }
-                          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 p-2 rounded-md"
+                          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                         >
-                          <FontAwesomeIcon icon={faImage} className="mr-2" />
                           View Image
                         </button>
                       </div>
                     </td>
-                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                      <p className="text-black dark:text-white">{ad.name}</p>
+                    <td className="px-6 py-5 text-center">
+                      <span className="font-semibold text-sm inline-block">
+                        {ad.name}
+                      </span>
                     </td>
-                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                      <div>
-                        <button className="p-2 text-sm font-medium rounded-md hover:text-[#d43232] focus:outline-none">
+                    <td className="px-6 py-5 text-center">
+                      <div className="flex justify-center space-x-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(ad.id);
+                          }}
+                          className="text-red-500 hover:text-red-700 transition"
+                          title="Delete"
+                        >
                           <FontAwesomeIcon icon={faTrashAlt} />
                         </button>
                       </div>

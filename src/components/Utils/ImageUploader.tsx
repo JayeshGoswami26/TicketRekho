@@ -4,12 +4,15 @@ import { motion } from 'framer-motion';
 import { Image, Upload, X } from 'lucide-react';
 import clsx from 'clsx';
 
+import Urls from '../../networking/app_urls'
+
 interface ImageUploaderProps {
   onImageChange: (file: File | null) => void;
   selectedImage: File | null;
+  existingImage: String | null; 
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageChange, selectedImage }) => {
+const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageChange, selectedImage, existingImage }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -41,6 +44,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageChange, selectedIm
     maxSize: 5242880, // 5MB
     maxFiles: 1,
   });
+
 
   return (
     <div className="w-full">

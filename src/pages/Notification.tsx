@@ -144,7 +144,7 @@ const Notification: React.FC = () => {
       case "Multiple":
         return <Users size={16} className="text-green-500" />
       case "All":
-        return <Globe size={16} className="text-purple-500" />
+        return <Globe size={16} className="text-yellow-500" />
       default:
         return <UserCheck size={16} className="text-gray-400" />
     }
@@ -307,7 +307,7 @@ const Notification: React.FC = () => {
                                   className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-600"
                                 >
                                   <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                                    <div className="w-8 h-8 bg-indigo-purple rounded-full flex items-center justify-center text-white text-sm font-semibold">
                                       {(user.name || user.email || "U").charAt(0).toUpperCase()}
                                     </div>
                                     <div>
