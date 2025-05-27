@@ -1,0 +1,324 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate, useParams } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import toast from 'react-hot-toast';
+import {
+  faArrowUp,
+  faArrowDown,
+  faEdit,
+  faTrashAlt,
+  faTags,
+} from '@fortawesome/free-solid-svg-icons';
+import Urls from '../../networking/app_urls';
+import { useSelector } from 'react-redux';
+import VenueForm from '../VenueForm';
+import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
+//import CreateVenueNameForm from '../CreateVenueNameForm';
+
+interface Venue {
+  _id: string;
+  type: string;
+  price: number;
+  quantity: number;
+}
+
+const VenueNonSittingTable: React.FC = () => {
+    const { id } = useParams(); 
+  const [name, setName] = useState<string>('');
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [totalPages, setTotalPages] = useState(1); // Total pages from API
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof Venue | null;
+    direction: string;
+  }>({
+    key: null,
+    direction: 'ascending',
+  });
+  const [loading, setLoading] = useState(true);
+  const [selectedCoupon, setSelectedCoupon] = useState<Venue | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+  const currentUser = useSelector((state: any) => state.user.currentUser.data);
+
+  const fetchManagers = (page: number, limit: number) => {
+    setLoading(true);
+    axios
+      .get(`${Urls.displayNonSittingTickets}?venueId=${id}&page=${page}&limit=${limit}`, {
+        headers: {
+          Authorization: `Bearer ${currentUser.token}`,
+        },
+      })
+      .then((response) => {
+        console.log("response.data.data ",response.data.data);
+        if(      
+          response.data.status &&
+          response.data.data         
+        ) {
+          const managerData = response.data.data;        
+          setVenues(managerData);
+          setTotalPages(response.data.data.pagination.totalPages); // Set total pages from API
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error('There was an error fetching the data!', error);
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchManagers(currentPage, itemsPerPage);
+  }, [currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    const fetchVenue = async () => {
+      try {
+        const res = await axios.get(`${Urls.displayVenueDetail}?id=${id}`, {
+          headers: {
+            Authorization: `Bearer ${currentUser.token}`,
+          },
+        });
+        setName(res.data.data.name); 
+     
+
+      } catch (err) {
+        console.error('Error fetching venue:', err);
+      }
+    };
+  
+    if (id) fetchVenue();
+  }, [id, currentUser.token]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSort = (key: keyof Venue) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    const sortedManagers = [...venues].sort((a, b) => {
+      if (a[key] < b[key]) {
+        return direction === 'ascending' ? -1 : 1;
+      }
+      if (a[key] > b[key]) {
+        return direction === 'ascending' ? 1 : -1;
+      }
+      return 0;
+    });
+    setVenues(sortedManagers);
+    setSortConfig({ key, direction });
+  };
+
+  const handleItemsPerPageChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    setItemsPerPage(parseInt(e.target.value, 10));
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+
+  const handleDelete = (venueId: string) => {
+    axios
+      .post(
+        `${Urls.deleteVenue}`,
+        { venueId },
+        {
+          headers: {
+            Authorization: `Bearer ${currentUser.token}`,
+          },
+        },
+      )
+      .then((response) => {
+        if (response.data.status) {
+          setVenues((prevCoupons) =>
+            prevCoupons.filter((venue) => venue._id !== venueId),
+          );
+        }
+      })
+      .catch((error) => {
+        console.error('Error deleting venue:', error);
+      });
+  };
+
+  const filteredManagers = venues.filter((manager) =>
+    manager.type.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const renderSortIcon = (key: keyof Venue) => {
+    if (sortConfig.key === key) {
+      return sortConfig.direction === 'ascending' ? (
+        <FontAwesomeIcon icon={faArrowUp} className="ml-2" />
+      ) : (
+        <FontAwesomeIcon icon={faArrowDown} className="ml-2" />
+      );
+    }
+    return null;
+  };
+
+  const handleModalFormSubmit = () => {
+    setShowModal(false);
+    setSelectedCoupon(null);
+    fetchManagers(currentPage, itemsPerPage);
+  };
+
+
+  const handleCancelEdit = () => {
+    // Reset selectedBanner and close the modal
+    setSelectedCoupon(null);
+    setShowModal(false);
+  };
+
+  return (
+    <>
+     <Breadcrumb pageName={`${name} → Venue Seating List`} parentName="Venues" parentPath="/venues"/>
+    <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+      <div className="flex gap-4">
+        <input
+          type="text"
+          placeholder="Search..."
+          className="mb-4 w-full p-2 border border-gray-300 rounded dark:bg-boxdark"
+          onChange={handleSearch}
+        />
+         <VenueForm
+         // venue={selectedCoupon}
+          onSubmitSuccess={handleModalFormSubmit}
+          onCancel={handleCancelEdit} // Add this prop to handle canceling edit
+        />  
+      </div>
+
+      <div className="max-w-full overflow-x-auto">
+        <table className="w-full table-auto">
+          <thead>
+            <tr className="bg-gray-2 text-left dark:bg-meta-4">
+              <th
+                className="min-w-[220px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer text-center"
+                onClick={() => handleSort('type')}
+              >
+                Ticket Type {renderSortIcon('type')}
+              </th>
+              <th
+                className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer text-center"
+                onClick={() => handleSort('price')}
+              >
+                 Price {renderSortIcon('price')}
+              </th>
+              <th
+                className="min-w-[150px] py-4 px-4 font-medium text-black dark:text-white cursor-pointer text-center"
+                onClick={() => handleSort('quantity')}
+              >
+                 Quantity {renderSortIcon('quantity')}
+              </th>
+             
+            </tr>
+          </thead>
+          <tbody>
+            {loading
+              ? Array(5)
+                  .fill(0)
+                  .map((_, index) => (
+                    <tr key={index}>
+                      <td className="py-4 px-4">
+                        <div className="animate-pulse flex space-x-4">
+                          {/* <div className="rounded-full bg-slate-200 dark:bg-slate-300 h-10 w-10"></div> */}
+                          <div className="flex-1 space-y-4 py-1 items-center flex ">
+                            <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full"></div>
+                            {/* <div className="h-4 bg-gray-300 dark:bg-slate-300 rounded w-1/2"></div> */}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
+                      </td>
+                    </tr>
+                  ))
+              : filteredManagers.map((venue, index) => (
+                  <tr key={index} className="cursor-pointer">
+                    <td className="border-b border-[#eee] py-5 px-4  dark:border-strokedark text-center">
+                     
+                      <h5 className="font-medium text-black dark:text-white">
+                        {venue.type}
+                      </h5>
+                    </td>
+                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
+                      <p className="text-black dark:text-white">
+                        {venue.price}
+                      </p>
+                    </td>
+                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
+                      <p className="text-black dark:text-white">
+                        {venue.quantity}
+                      </p>
+                    </td>
+                  
+
+                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
+                      <div className="flex gap-2">
+                      
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+          </tbody>
+        </table>
+
+        <div className="flex items-center justify-between mt-4">
+          <div>
+            <label htmlFor="itemsPerPage" className="mr-2">
+              Items per page:
+            </label>
+            <select
+              id="itemsPerPage"
+              value={itemsPerPage}
+              onChange={handleItemsPerPageChange}
+              className="p-1 border border-gray-300 rounded dark:bg-boxdark"
+            >
+              <option value={15}>15</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+          <div>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="mr-2 p-2 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className="ml-2 p-2 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </>
+  );
+};
+
+export default VenueNonSittingTable;
+
