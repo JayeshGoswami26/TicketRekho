@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faArrowUp,
-  faArrowDown,
-  faEdit,
-  faTrashAlt,
-} from '@fortawesome/free-solid-svg-icons';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Edit, Trash2, Plus, Search, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import Urls from '../../networking/app_urls';
 import { useSelector } from 'react-redux';
 import TermForm from '../TermForm';
@@ -22,7 +17,7 @@ const TermsTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [searchTerm, setSearchTerm] = useState('');
-  const [totalPages, setTotalPages] = useState(1); // Total pages from API
+  const [totalPages, setTotalPages] = useState(1);
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Terms | null;
     direction: string;
@@ -45,13 +40,10 @@ const TermsTable: React.FC = () => {
         },
       })
       .then((response) => {
-        if (
-          response.data.status &&
-          response.data.data           
-        ) {
+        if (response.data.status && response.data.data) {
           const managerData = response.data.data;
           setTerms(managerData);
-          setTotalPages(response.data.data.pagination.totalPages); // Set total pages from API
+          setTotalPages(response.data.data.pagination.totalPages);
           setLoading(false);
         }
       })
@@ -91,15 +83,18 @@ const TermsTable: React.FC = () => {
     e: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     setItemsPerPage(parseInt(e.target.value, 10));
-    setCurrentPage(1); // Reset to first page when changing items per page
+    setCurrentPage(1);
   };
 
- 
   const editBanner = (term: Terms) => {
     setSelectedTerms(term);
     setShowModal(true);
   };
 
+  const handleAddTerm = () => {
+    setSelectedTerms(null);
+    setShowModal(true);
+  };
 
   const filteredManagers = terms.filter((manager) =>
     manager.content.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -108,9 +103,9 @@ const TermsTable: React.FC = () => {
   const renderSortIcon = (key: keyof Terms) => {
     if (sortConfig.key === key) {
       return sortConfig.direction === 'ascending' ? (
-        <FontAwesomeIcon icon={faArrowUp} className="ml-2" />
+        <ChevronUp className="w-4 h-4 ml-2 inline" />
       ) : (
-        <FontAwesomeIcon icon={faArrowDown} className="ml-2" />
+        <ChevronDown className="w-4 h-4 ml-2 inline" />
       );
     }
     return null;
@@ -123,154 +118,183 @@ const TermsTable: React.FC = () => {
   };
 
   const handleCancelEdit = () => {
-    // Reset selectedBanner and close the modal
     setSelectedTerms(null);
     setShowModal(false);
   };
 
   return (
-    <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-      <div className="flex gap-4">
-        <input
-          type="text"
-          placeholder="Search..."
-          className="mb-4 w-full p-2 border border-gray-300 rounded dark:bg-boxdark"
-          onChange={handleSearch}
-        />
-         <TermForm
-          term={selectedTerms}
-          onSubmitSuccess={handleModalFormSubmit}
-          onCancel={handleCancelEdit} // Add this prop to handle canceling edit
-        /> 
+    <div className="container mx-auto p-6 bg-white dark:bg-gray-900 rounded-xl shadow-lg">
+      {/* Header with Search and Add Button */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <div className="relative w-full sm:w-1/2">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search terms..."
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+            onChange={handleSearch}
+          />
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleAddTerm}
+          className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg flex items-center gap-2 hover:from-indigo-600 hover:to-purple-700 transition"
+        >
+          <Plus className="w-5 h-5" />
+          Add Term
+        </motion.button>
       </div>
 
-      <div className="max-w-full overflow-x-auto">
-        <table className="w-full table-auto">
-          <thead>
-            <tr className="bg-gray-2 text-left dark:bg-meta-4">
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+            <tr>
               <th
-                className="min-w-[220px] py-4 px-4 font-bold text-black dark:text-white xl:pl-11 cursor-pointer text-center"
+                className="py-4 px-6 font-semibold cursor-pointer"
                 onClick={() => handleSort('type')}
               >
-                Type {renderSortIcon('type')}
+                Title {renderSortIcon('type')}
               </th>
               <th
-                className="min-w-[150px] py-4 px-4 font-bold text-black dark:text-white cursor-pointer text-center"
+                className="py-4 px-6 font-semibold cursor-pointer"
                 onClick={() => handleSort('content')}
               >
-                Content {renderSortIcon('content')}
+                Description {renderSortIcon('content')}
               </th>
-              <th             
-              >
-                Action
-              </th>
-             
+              <th className="py-4 px-6 font-semibold text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {loading
-              ? Array(5)
+            <AnimatePresence>
+              {loading ? (
+                Array(5)
                   .fill(0)
                   .map((_, index) => (
-                    <tr key={index}>
-                      <td className="py-4 px-4">
-                        <div className="animate-pulse flex space-x-4">
-                          {/* <div className="rounded-full bg-slate-200 dark:bg-slate-300 h-10 w-10"></div> */}
-                          <div className="flex-1 space-y-4 py-1 items-center flex ">
-                            <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full"></div>
-                            {/* <div className="h-4 bg-gray-300 dark:bg-slate-300 rounded w-1/2"></div> */}
-                          </div>
-                        </div>
+                    <motion.tr
+                      key={index}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="border-b border-gray-200 dark:border-gray-700"
+                    >
+                      <td className="py-4 px-6">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse"></div>
                       </td>
-                      <td className="py-4 px-4">
-                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
+                      <td className="py-4 px-6">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full animate-pulse"></div>
                       </td>
-                      <td className="py-4 px-4">
-                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
+                      <td className="py-4 px-6">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse mx-auto"></div>
                       </td>
-                      <td className="py-4 px-4">
-                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="h-4 bg-slate-200 dark:bg-slate-300 rounded w-full animate-pulse"></div>
-                      </td>
-                    </tr>
+                    </motion.tr>
                   ))
-              : filteredManagers.map((term, index) => (
-                  <tr key={index} className="cursor-pointer">
-                    <td className="border-b border-[#eee] py-5 px-4  dark:border-strokedark text-center">
-                    
-
-                      <h5 className="font-medium text-black dark:text-white capitalize">
-                        {term.type}
-                      </h5>
+              ) : (
+                filteredManagers.map((term, index) => (
+                  <motion.tr
+                    key={term._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                  >
+                    <td className="py-4 px-6 text-gray-900 dark:text-white font-medium capitalize">
+                      {term.type}
                     </td>
-                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                      <p className="text-black dark:text-white">
-                        {term.content}
-                      </p>
+                    <td className="py-4 px-6 text-gray-700 dark:text-gray-300">
+                      {term.content}
                     </td>
-                  
-                  
-
-                    <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark text-center">
-                      <div className="flex gap-2">
-                        <button
+                    <td className="py-4 px-6 text-center">
+                      <div className="flex justify-center gap-3">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                           onClick={() => editBanner(term)}
-                          className="p-2 text-sm font-medium rounded-md focus:outline-none hover:text-[#472DA9]"
+                          className="p-2 text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
                         >
-                          <FontAwesomeIcon icon={faEdit} />
-                        </button>
-                      
+                          <Edit className="w-5 h-5" />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="p-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </motion.button>
                       </div>
                     </td>
-                  </tr>
-                ))}
+                  </motion.tr>
+                ))
+              )}
+            </AnimatePresence>
           </tbody>
         </table>
+      </div>
 
-        <div className="flex items-center justify-between mt-4">
-          <div>
-            <label htmlFor="itemsPerPage" className="mr-2">
-              Items per page:
-            </label>
-            <select
-              id="itemsPerPage"
-              value={itemsPerPage}
-              onChange={handleItemsPerPageChange}
-              className="p-1 border border-gray-300 rounded dark:bg-boxdark"
-            >
-              <option value={15}>15</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-            </select>
-          </div>
-          <div>
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="mr-2 p-2 bg-gray-200 rounded disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className="ml-2 p-2 bg-gray-200 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+      {/* Pagination */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
+        <div className="flex items-center gap-2">
+          <label htmlFor="itemsPerPage" className="text-gray-700 dark:text-gray-300">
+            Items per page:
+          </label>
+          <select
+            id="itemsPerPage"
+            value={itemsPerPage}
+            onChange={handleItemsPerPageChange}
+            className="p-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value={15}>15</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </motion.button>
+          <span className="text-gray-700 dark:text-gray-300">
+            Page {currentPage} of {totalPages}
+          </span>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </motion.button>
         </div>
       </div>
+
+      {/* Term Form Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
+          >
+           
+              <TermForm
+                term={selectedTerms}
+                onSubmitSuccess={handleModalFormSubmit}
+                onCancel={handleCancelEdit}
+              />
+        
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
 export default TermsTable;
-

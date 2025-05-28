@@ -100,6 +100,8 @@ const MovieQRScanner: React.FC = () => {
   };
 
   const sendGameUserId = async () => {
+    console.log(qrData);
+    
     if (!qrData) return;
 
     setIsSending(true);
