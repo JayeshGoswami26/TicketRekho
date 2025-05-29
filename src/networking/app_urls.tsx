@@ -211,6 +211,13 @@ const eventManagerDashboard = `${Bash_url}/subUser/eventManagerDashboard`;
 const theatreManagerDashboard = `${Bash_url}/subUser/theatreManagerDashboard`;
 const editMangerProfile = `${Bash_url}/admin/editMangerProfile`;
 
+const createEmployee = `${Bash_url}/subUser/createEmployee`;
+const updateEmployee = `${Bash_url}/subUser/updateEmployee`;
+const getEmployeeListBymanagerId = `${Bash_url}/subUser/getEmployeeListBymanagerId`;
+const deleteEmployee = `${Bash_url}/subUser/deleteEmployee`;
+const getEmployeeDetails = `${Bash_url}/subUser/getEmployeeDetails`;
+const changeEmployeeStatus = `${Bash_url}/subUser/changeEmployeeStatus`;
+
 export default {
   Bash_url,
   loginUrl,
@@ -373,4 +380,11 @@ export default {
   eventManagerDashboard,
   theatreManagerDashboard,
   editMangerProfile,
+
+    createEmployee,
+  updateEmployee,
+  getEmployeeListBymanagerId,
+  deleteEmployee,
+  getEmployeeDetails,
+  changeEmployeeStatus,
 };

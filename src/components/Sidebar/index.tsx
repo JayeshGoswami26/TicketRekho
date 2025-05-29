@@ -57,10 +57,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           },
         ]
       : []),
-    ...(currentUser.role === "theatreManager"
+    ...(["theatreManager", "theatreEmployee"].includes(currentUser.role)
       ? [{ path: "/theatre-dashboard", icon: faGamepad, label: "Dashboard" }]
       : []),
-    ...(currentUser.role === "eventManager" ? [{ path: "/event-dashboard", icon: faGamepad, label: "Dashboard" }] : []),
+    ...(["eventManager", "eventEmployee"].includes(currentUser.role) ? [{ path: "/event-dashboard", icon: faGamepad, label: "Dashboard" }] : []),
     { path: "/state", icon: faMap, label: "States", permission: "states" },
     {
       path: "/managers",
@@ -98,6 +98,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       icon: faFileAlt,
       label: "Manage Theatre Reports",
       permission: "manage theatre reports",
+    },
+     {
+      path: "/employees",
+      icon: faClipboardList,
+      label: "Employee Management",
+      permission: "employee management",
     },
     {
       path: "/events",

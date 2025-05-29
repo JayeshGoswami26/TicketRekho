@@ -58,6 +58,8 @@ import ShowTimeRealTimeSeatStatus from './pages/TheatreManager/ShowTimeRealTimeS
 import EventRealTimeSittingSeatStatus from './pages/TheatreManager/EventRealTimeSittingSeatStatus';
 import EventRealTimeNonSittingSeatStatus from './pages/TheatreManager/EventRealTimeNonSittingSeatStatus';
 import ViewManagerProfile from './components/Modals/ViewManagerProfile';
+import Employee from './pages/Employee';
+import EmployeeDetails from './pages/EmployeeDetails';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -136,7 +138,7 @@ function App() {
         <Route
           element={
             <DefaultLayout>
-              <PrivateRoute allowedRoles={['admin', 'theatreManager', 'eventManager']} />
+              <PrivateRoute allowedRoles={['admin', 'theatreManager', 'eventManager','eventEmployee','theatreEmployee']} />
             </DefaultLayout>
           }
         >
@@ -172,6 +174,10 @@ function App() {
           <Route path="/event-realtime-nonsitting-seat-status/:id" element={<><PageTitle title="Event Non-Sitting Seat Status" /><EventRealTimeNonSittingSeatStatus /></>} />
           <Route path="/event-report" element={<><PageTitle title="Event Report" /><EventReport /></>} />
           <Route path="/theatre-report" element={<><PageTitle title="Theatre Report" /><TheatreReport /></>} />
+        
+           
+          <Route path="/employees" element={<><PageTitle title="Employees" /><Employee /></>} />
+          <Route path="/employee-detail/:id" element={<><PageTitle title="Employee Detail" /><EmployeeDetails /></>} />
 
        
           <Route path="/managers" element={<><PageTitle title="Managers" /><Manager /></>} />

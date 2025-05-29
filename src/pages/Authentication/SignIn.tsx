@@ -68,9 +68,9 @@ const SignIn: React.FC = () => {
 
           if (userRole === 'admin') {
             navigate('/dashboard');
-          } else if (userRole === 'theatreManager') {
+          } else if (userRole === 'theatreManager' || userRole === 'theatreEmployee') {
             navigate('/theatre-dashboard');
-          } else if (userRole === 'eventManager') {
+          } else if (userRole === 'eventManager' || userRole === 'eventEmployee') {
             navigate('/event-dashboard');
           }
         } else {
