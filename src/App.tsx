@@ -65,6 +65,7 @@ import EmployeeDetails from './pages/EmployeeDetails';
 import QRScannerMovie from './pages/QR/QRScannerMovie';
 >>>>>>> 63385eb5e26994167c1bdba5c3632440aa499dba
 
+
 function App() {
   const [loading, setLoading] = useState(true);
   const { pathname } = useLocation();
