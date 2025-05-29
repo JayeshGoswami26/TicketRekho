@@ -58,8 +58,12 @@ import ShowTimeRealTimeSeatStatus from './pages/TheatreManager/ShowTimeRealTimeS
 import EventRealTimeSittingSeatStatus from './pages/TheatreManager/EventRealTimeSittingSeatStatus';
 import EventRealTimeNonSittingSeatStatus from './pages/TheatreManager/EventRealTimeNonSittingSeatStatus';
 import ViewManagerProfile from './components/Modals/ViewManagerProfile';
+<<<<<<< HEAD
 import Employee from './pages/Employee';
 import EmployeeDetails from './pages/EmployeeDetails';
+=======
+import QRScannerMovie from './pages/QR/QRScannerMovie';
+>>>>>>> 63385eb5e26994167c1bdba5c3632440aa499dba
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -162,7 +166,7 @@ function App() {
           <Route path="/seat-layout/:id" element={<><PageTitle title="Seat Layout" /><SeatLayout /></>} />
           <Route path="/grabABites/:id" element={<><PageTitle title="Grab A Bites" /><GrabABites /></>} />
           <Route path="/moviestickets/:id" element={<><PageTitle title="Movies Tickets" /><MoviesTicket /></>} />
-          <Route path="/movie-qr-code" element={<><PageTitle title="Scan QR" /><MovieQRScanner /></>} />
+          <Route path="/movie-qr-code" element={<><PageTitle title="Scan QR" /><QRScannerMovie /></>} />
           <Route path="/showtime-realtime-seat-status/:id" element={<><PageTitle title="Real-Time Seat Status" /><ShowTimeRealTimeSeatStatus /></>} />
 
     
